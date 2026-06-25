@@ -32,10 +32,10 @@ html,body{background:var(--bg);color:var(--text);font-family:'Geist',system-ui,s
 .num{font-variant-numeric:tabular-nums}
 
 /* ===== HERO ===== */
-.hero{position:relative; min-height:55vh; width:100%; overflow:hidden; background:#000; display:flex; flex-direction:column; justify-content:flex-end; padding-bottom:64px;}
-#particles{position:absolute;inset:0;width:100%;height:100%;z-index:1}
-.hero::after{content:""; position:absolute; inset:0; background:radial-gradient(ellipse at 30% 80%,rgba(0,0,0,0) 0%,#000 85%); z-index:2; pointer-events:none}
-.hero-inner{position:relative; z-index:3; max-width:1440px; margin:0 auto; width:100%; display:flex; flex-direction:column; align-items:flex-start; padding:140px 32px 0 32px;}
+.hero{position:relative; min-height:55vh; width:100%; overflow:visible; background:transparent; display:flex; flex-direction:column; justify-content:flex-end; padding-bottom:64px;}
+#particles{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.hero::after{content:""; position:absolute; inset:0; background:radial-gradient(ellipse at 30% 80%,rgba(0,0,0,0) 0%,rgba(0,0,0,.5) 85%); z-index:2; pointer-events:none}
+.hero-inner{position:relative; z-index:3; max-width:1440px; margin:0 auto; width:100%; display:flex; flex-direction:column; align-items:flex-start; padding:88px 32px 0 32px;}
 
 /* nav pill */
 .nav{position:absolute;top:24px;left:50%;transform:translateX(-50%);z-index:5;display:flex;align-items:center;gap:6px;padding:6px;background:rgba(15,17,22,.65);backdrop-filter:blur(20px) saturate(140%);-webkit-backdrop-filter:blur(20px) saturate(140%);border:1px solid rgba(255,255,255,.08);border-radius:999px;box-shadow:0 8px 40px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.06)}
@@ -67,7 +67,7 @@ h1.title{font-size:clamp(40px,5vw,72px); font-weight:700; letter-spacing:-.04em;
 .delta.dn{background:rgba(248,113,113,.12);color:#FCA5A5}
 
 /* ===== DATA LAYER ===== */
-.data{background:var(--panel);padding:80px 32px 120px;border-top:1px solid var(--line-soft)}
+.data{background:transparent;padding:80px 32px 120px;border-top:none;position:relative;z-index:3}
 .shell{max-width:1440px;margin:0 auto}
 .section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:32px;gap:24px;flex-wrap:wrap}
 .section-head h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
@@ -84,8 +84,8 @@ h1.title{font-size:clamp(40px,5vw,72px); font-weight:700; letter-spacing:-.04em;
 @media(max-width:1100px){.row4{grid-template-columns:repeat(2,1fr)}.row2,.row2b{grid-template-columns:1fr}}
 @media(max-width:640px){.row4{grid-template-columns:1fr}}
 
-.card{background:var(--panel-1);border:1px solid var(--line);border-radius:16px;padding:24px;transition:transform .2s,border-color .2s,background .2s}
-.card:hover{transform:translateY(-2px);border-color:#293345;background:var(--panel-2)}
+.card{background:rgba(11,15,20,.72);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.07);border-radius:16px;padding:24px;transition:transform .2s,border-color .2s,background .2s}
+.card:hover{transform:translateY(-2px);border-color:rgba(34,211,238,.2);background:rgba(17,22,31,.8)}
 .card-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .card-title{font-size:13px;color:var(--text-1);font-weight:500;letter-spacing:-.005em}
 .card-meta{font-size:11px;color:var(--text-2)}
@@ -417,9 +417,8 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
   const mouse={x:null,y:null,r:160};
 
   function size(){
-    const heroSection = document.querySelector('.hero');
     W = cvs.width = window.innerWidth;
-    H = cvs.height = heroSection.offsetHeight; 
+    H = cvs.height = Math.max(document.body.scrollHeight, window.innerHeight);
     init();
   }
   function init(){
@@ -458,6 +457,10 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
     raf=requestAnimationFrame(step);
   }
   addEventListener('resize',size);
+addEventListener('scroll',()=>{
+  const needed=Math.max(document.body.scrollHeight,window.innerHeight);
+  if(needed>H){H=cvs.height=needed;init();}
+});
   addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY});
   addEventListener('mouseout',()=>{mouse.x=null;mouse.y=null});
   size();step();
