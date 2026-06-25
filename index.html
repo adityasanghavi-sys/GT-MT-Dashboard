@@ -461,16 +461,16 @@ document.querySelectorAll('.fchip').forEach(b=>{
 });
 
 // ===== Live Data Hydration =====
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxGLvZw0ICbRcE9IuOWpuDRN-2LVx_dFW7hMd5K3Yg-VZQ8s4Xc3W85tFiHy9HZmmly/exec";
+
 document.addEventListener("DOMContentLoaded", () => {
   console.log("Requesting data from Google Sheets...");
-  
-  // Call the Code.gs function asynchronously
-  google.script.run
-    .withSuccessHandler(updateDashboard)
-    .withFailureHandler(handleError)
-    .getDashboardData();
+  fetch(APPS_SCRIPT_URL + "?action=data")
+    .then(r => r.json())
+    .then(updateDashboard)
+    .catch(handleError);
 });
-function updateDashboard(data) {
+  function updateDashboard(data) {
   if (data.error) { console.error(data.error); return; }
   const kpi = data.kpis;
 
