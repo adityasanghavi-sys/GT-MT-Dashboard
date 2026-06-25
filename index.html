@@ -488,16 +488,12 @@ function renderDashboard(data, zoneFilter) {
     filteredStores2 = data.topStores;
     filteredStates = data.states;
   } else {
-    const zd = data.zones[zoneFilter] || { sales: 0, qty: 0 };
+    const zd = data.zones[zoneFilter] || { sales: 0 };
     filteredSales = zd.sales;
-    filteredStores = data.topStores.filter(s => s.zone === zoneFilter).length;
-    filteredSkus = data.topSkusByZone?.[zoneFilter] || data.topSkus;
-    filteredStores2 = data.topStores.filter(s => s.zone === zoneFilter);
-    filteredStates = data.states.filter(s => {
-      // match states to zone via store list
-      const zoneStates = new Set(data.topStores.filter(st => st.zone === zoneFilter).map(st => st.state));
-      return zoneStates.has(s.name);
-    });
+    filteredStores = data.zoneStoreCount?.[zoneFilter] || 0;
+    filteredSkus = data.topSkus;
+    filteredStores2 = data.zoneTopStores?.[zoneFilter] || [];
+    filteredStates = data.zoneStates?.[zoneFilter] || [];
   }
 
   const fmtSales = filteredSales >= 100000 
