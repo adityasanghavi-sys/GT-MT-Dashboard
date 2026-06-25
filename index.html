@@ -470,33 +470,93 @@ document.addEventListener("DOMContentLoaded", () => {
     .withFailureHandler(handleError)
     .getDashboardData();
 });
-
 function updateDashboard(data) {
-  if (data.error) {
-    console.error(data.error);
-    return;
+  if (data.error) { console.error(data.error); return; }
+  const kpi = data.kpis;
+
+  // Hero KPIs
+  const hv = document.querySelectorAll('.hkpi-val');
+  if (hv[0]) hv[0].innerText = kpi.netSalesFormatted;
+  if (hv[1]) hv[1].innerText = kpi.activeStores;
+
+  // Strip KPIs
+  const sv = document.querySelectorAll('.kpi-val');
+  if (sv[0]) sv[0].innerText = "₹" + Math.round(kpi.netSalesRaw).toLocaleString('en-IN');
+  if (sv[1]) sv[1].innerText = kpi.activeStores;
+  if (sv[2]) sv[2].innerText = kpi.avgVelocityFormatted;
+  if (sv[3]) sv[3].innerText = kpi.topZonePct + "%";
+
+  // Zone bars — update width + value text
+  const zoneOrder = ["WEST","NORTH","EAST","SOUTH"];
+  const maxZoneSales = Math.max(...zoneOrder.map(z => data.zones[z]?.sales || 0));
+  document.querySelectorAll('.zoneitem').forEach((el, i) => {
+    const zone = zoneOrder[i];
+    if (!zone || !data.zones[zone]) return;
+    const z = data.zones[zone];
+    const bar = el.querySelector('.zonebar > div');
+    const val = el.querySelector('.val');
+    if (bar) bar.style.width = (z.sales / maxZoneSales * 100) + "%";
+    if (val) val.innerHTML = "₹" + (z.sales >= 100000 ? (z.sales/100000).toFixed(2)+"L" : Math.round(z.sales).toLocaleString('en-IN')) + '<span class="pct">' + z.pct + '%</span>';
+  });
+
+  // Top SKUs
+  const skuList = document.querySelector('.skulist');
+  if (skuList && data.topSkus) {
+    skuList.innerHTML = data.topSkus.map((s, i) => {
+      const name = s.name.replace(/SNACKIBLE\s*/i,'').replace(/\b(\w)/g,c=>c.toUpperCase()).slice(0,35);
+      const val = s.sales >= 100000 ? "₹"+(s.sales/100000).toFixed(2)+"L" : "₹"+Math.round(s.sales).toLocaleString('en-IN');
+      return `<div class="skurow"><span class="rank">${String(i+1).padStart(2,'0')}</span><span class="skuname">${name}</span><div class="skubar"><div style="width:${s.pctOfTop}%"></div></div><span class="skuval">${val}</span></div>`;
+    }).join('');
   }
-  
-  // 1. Update Hero KPIs
-  const heroSales = document.querySelectorAll('.hkpi-val')[0];
-  const heroStores = document.querySelectorAll('.hkpi-val')[1];
-  
-  if (heroSales) heroSales.innerText = data.kpis.netSalesFormatted;
-  if (heroStores) heroStores.innerText = data.kpis.activeStores;
-  
-  // 2. Update Data Layer Strip
-  const stripSales = document.querySelectorAll('.kpi-val')[0];
-  const stripStores = document.querySelectorAll('.kpi-val')[1];
-  const stripVelocity = document.querySelectorAll('.kpi-val')[2];
-  
-  if (stripSales) stripSales.innerText = data.kpis.netSalesFormatted;
-  if (stripStores) stripStores.innerText = data.kpis.activeStores;
-  if (stripVelocity) stripVelocity.innerText = data.kpis.avgVelocityFormatted;
+
+  // Top Stores
+  const storeList = document.querySelector('.storelist');
+  if (storeList && data.topStores) {
+    storeList.innerHTML = data.topStores.map(s => {
+      const val = s.sales >= 100000 ? "₹"+(s.sales/100000).toFixed(2)+"L" : "₹"+Math.round(s.sales).toLocaleString('en-IN');
+      const cap = s.name.replace(/\b(\w)/g,c=>c.toUpperCase()).slice(0,30);
+      const zone = s.zone ? s.zone.charAt(0)+s.zone.slice(1).toLowerCase() : '';
+      return `<div class="storerow"><div><div class="storename">${cap}</div><div class="storesub">${s.state} · ${zone}</div></div><span class="storeval num">${val}</span></div>`;
+    }).join('');
+  }
+
+  // Category bar + legend
+  const catBar = document.querySelector('.catbar');
+  const catLegend = document.querySelector('.catlegend');
+  const catColors = ['#22D3EE','#A78BFA','#F472B6','#A3E635','#FBBF24','#34D399','#7C8390'];
+  if (catBar && data.categories) {
+    catBar.innerHTML = data.categories.map((c,i) => {
+      const col = catColors[i] || '#555';
+      const label = parseFloat(c.pct) > 7 ? c.pct+'%' : '';
+      const textCol = ['#A3E635','#FBBF24'].includes(col) ? 'color:#000' : '';
+      return `<div style="flex:${Math.round(c.sales)};background:${col};${textCol}">${label}</div>`;
+    }).join('');
+  }
+  if (catLegend && data.categories) {
+    catLegend.innerHTML = data.categories.map((c,i) => {
+      const col = catColors[i] || '#555';
+      const name = c.name.charAt(0)+c.name.slice(1).toLowerCase();
+      const val = c.sales >= 100000 ? "₹"+(c.sales/100000).toFixed(2)+"L" : "₹"+Math.round(c.sales).toLocaleString('en-IN');
+      return `<div><span class="lbl"><i style="background:${col}"></i>${name}</span><span class="val">${val}</span></div>`;
+    }).join('');
+  }
+
+  // State table
+  const tbody = document.querySelector('table tbody');
+  const statusColor = (v, stores) => {
+    const vel = v.sales / (stores || 1);
+    return vel > 10000 ? 's-good' : vel > 6000 ? 's-warn' : 's-bad';
+  };
+  if (tbody && data.states) {
+    tbody.innerHTML = data.states.map(s => {
+      const sc = statusColor(s, s.stores);
+      const sales = s.sales >= 100000 ? "₹"+(s.sales/100000).toFixed(2)+"L" : "₹"+Math.round(s.sales).toLocaleString('en-IN');
+      return `<tr><td><span class="statusdot ${sc}"></span>${s.name}</td><td class="num">${s.stores}</td><td class="num">${sales}</td><td class="num">${s.velocity}</td></tr>`;
+    }).join('');
+  }
 }
 
-function handleError(err) {
-  console.error("Dashboard failed to load data:", err);
-}
+function handleError(err) { console.error("Dashboard load failed:", err); }
 </script>
 </body>
 </html>
