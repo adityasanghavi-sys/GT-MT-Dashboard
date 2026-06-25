@@ -456,9 +456,6 @@ addEventListener('scroll',()=>{
 document.querySelectorAll('.seg button').forEach(b=>{
   b.addEventListener('click',()=>{document.querySelectorAll('.seg button').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
 });
-document.querySelectorAll('.fchip').forEach(b=>{
-  b.addEventListener('click',()=>{document.querySelectorAll('.fchip').forEach(x=>x.classList.remove('on'));b.classList.add('on');});
-});
 
 // ===== Live Data Hydration =====
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxGLvZw0ICbRcE9IuOWpuDRN-2LVx_dFW7hMd5K3Yg-VZQ8s4Xc3W85tFiHy9HZmmly/exec";
@@ -470,9 +467,42 @@ document.addEventListener("DOMContentLoaded", () => {
     .then(updateDashboard)
     .catch(handleError);
 });
-  function updateDashboard(data) {
+  let _cachedData = null;
+
+function updateDashboard(data) {
   if (data.error) { console.error(data.error); return; }
+  _cachedData = data;
+  renderDashboard(data, "ALL");
+}
+
+function renderDashboard(data, zoneFilter) {
   const kpi = data.kpis;
+
+// Filter raw data by zone if needed — recompute KPIs from zones object
+  let filteredSales, filteredStores, filteredSkus, filteredStores2, filteredStates;
+  
+  if (zoneFilter === 'ALL') {
+    filteredSales = kpi.netSalesRaw;
+    filteredStores = kpi.activeStores;
+    filteredSkus = data.topSkus;
+    filteredStores2 = data.topStores;
+    filteredStates = data.states;
+  } else {
+    const zd = data.zones[zoneFilter] || { sales: 0, qty: 0 };
+    filteredSales = zd.sales;
+    filteredStores = data.topStores.filter(s => s.zone === zoneFilter).length;
+    filteredSkus = data.topSkusByZone?.[zoneFilter] || data.topSkus;
+    filteredStores2 = data.topStores.filter(s => s.zone === zoneFilter);
+    filteredStates = data.states.filter(s => {
+      // match states to zone via store list
+      const zoneStates = new Set(data.topStores.filter(st => st.zone === zoneFilter).map(st => st.state));
+      return zoneStates.has(s.name);
+    });
+  }
+
+  const fmtSales = filteredSales >= 100000 
+    ? "₹" + (filteredSales/100000).toFixed(2) + "L" 
+    : "₹" + Math.round(filteredSales).toLocaleString('en-IN');
 
   // Hero KPIs
   const hv = document.querySelectorAll('.hkpi-val');
@@ -481,11 +511,15 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Strip KPIs
   const sv = document.querySelectorAll('.kpi-val');
-  if (sv[0]) sv[0].innerText = "₹" + Math.round(kpi.netSalesRaw).toLocaleString('en-IN');
-  if (sv[1]) sv[1].innerText = kpi.activeStores;
-  if (sv[2]) sv[2].innerText = kpi.avgVelocityFormatted;
-  if (sv[3]) sv[3].innerText = kpi.topZonePct + "%";
-
+  if (sv[0]) sv[0].innerText = fmtSales;
+  if (sv[1]) sv[1].innerText = filteredStores;
+  if (sv[2]) sv[2].innerText = filteredStores > 0 ? "₹" + Math.round(filteredSales / filteredStores).toLocaleString('en-IN') : "—";
+  if (sv[3]) {
+    const zonePct = zoneFilter === 'ALL' ? kpi.topZonePct : (data.zones[zoneFilter]?.pct || "0");
+    sv[3].innerText = zonePct + "%";
+  }
+  if (hv[0]) hv[0].innerText = fmtSales;
+  if (hv[1]) hv[1].innerText = filteredStores;
   // Zone bars — update width + value text
   const zoneOrder = ["WEST","NORTH","EAST","SOUTH"];
   const maxZoneSales = Math.max(...zoneOrder.map(z => data.zones[z]?.sales || 0));
@@ -511,8 +545,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Top Stores
   const storeList = document.querySelector('.storelist');
-  if (storeList && data.topStores) {
-    storeList.innerHTML = data.topStores.map(s => {
+  if (storeList && filteredStores2) {
+    storeList.innerHTML = filteredStores2.map(s => {
       const val = s.sales >= 100000 ? "₹"+(s.sales/100000).toFixed(2)+"L" : "₹"+Math.round(s.sales).toLocaleString('en-IN');
       const cap = s.name.replace(/\b(\w)/g,c=>c.toUpperCase()).slice(0,30);
       const zone = s.zone ? s.zone.charAt(0)+s.zone.slice(1).toLowerCase() : '';
@@ -547,8 +581,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const vel = v.sales / (stores || 1);
     return vel > 10000 ? 's-good' : vel > 6000 ? 's-warn' : 's-bad';
   };
-  if (tbody && data.states) {
-    tbody.innerHTML = data.states.map(s => {
+  if (tbody && filteredStates) {
+    tbody.innerHTML = filteredStates.map(s => {
       const sc = statusColor(s, s.stores);
       const sales = s.sales >= 100000 ? "₹"+(s.sales/100000).toFixed(2)+"L" : "₹"+Math.round(s.sales).toLocaleString('en-IN');
       return `<tr><td><span class="statusdot ${sc}"></span>${s.name}</td><td class="num">${s.stores}</td><td class="num">${sales}</td><td class="num">${s.velocity}</td></tr>`;
@@ -557,6 +591,18 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 
 function handleError(err) { console.error("Dashboard load failed:", err); }
+
+// Zone filter wiring
+document.querySelectorAll('.fchip').forEach(b => {
+  b.addEventListener('click', () => {
+    if (!_cachedData) return;
+    document.querySelectorAll('.fchip').forEach(x => x.classList.remove('on'));
+    b.classList.add('on');
+    const label = b.textContent.trim().toUpperCase();
+    const zone = label === 'ALL ZONES' ? 'ALL' : label;
+    renderDashboard(_cachedData, zone);
+  });
+});
 </script>
 </body>
 </html>
