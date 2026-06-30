@@ -683,14 +683,7 @@ function renderInboundDashboard(data) {
       return `<span style="display:inline-flex;align-items:center;gap:8px;font-size:13px"><i style="width:10px;height:10px;border-radius:3px;background:${col};display:inline-block;flex-shrink:0"></i>${s.name} · <strong style="color:var(--text)">${s.count}</strong> <span style="color:var(--text-2)">(${pct}%)</span></span>`;
     }).join('');
   }
-  if (funnelLegendEl) {
-    funnelLegendEl.innerHTML = statusList.map(s => {
-      const key = s.name.toLowerCase();
-      const col = funnelColors[key] || "#444B57";
-      return `<span style="display:inline-flex;align-items:center;gap:6px"><i style="width:8px;height:8px;border-radius:2px;background:${col};display:inline-block"></i>${s.name} · ${s.count}</span>`;
-    }).join('');
-  }
-
+  
   // ===== Source split =====
   const sourceIcons = { meta: "📱", shopify: "🛒", "customer care": "☎️" };
   const sourcesEl = document.getElementById('inbound-sources');
@@ -730,6 +723,7 @@ function renderInboundDashboard(data) {
       <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--text-2)">
         Sample data is sparse — most rows have this field unfilled. Treat as directional only.
       </div>`;
+  }
 
   // ===== Leaderboard with conversion rate =====
   if (data.leadByPerformance) {
