@@ -164,6 +164,48 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .list-val{font-size:14px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;text-align:right}
 
 .section-gap{height:48px}
+
+.b2b-grid{display:grid;gap:16px}
+.b2b-row2{grid-template-columns:1fr 1fr}
+@media(max-width:1100px){.b2b-row2{grid-template-columns:1fr}}
+
+.b2b-card{border:1px solid var(--line);border-radius:8px;padding:16px;background:rgba(11,15,20,.5)}
+.b2b-card-title{font-size:14px;font-weight:500;color:var(--text);margin-bottom:16px}
+
+.kpi-strip{display:grid;grid-template-columns:repeat(5,1fr);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:28px}
+.kpi-strip-cell{padding:14px;border-right:1px solid var(--line)}
+.kpi-strip-cell:last-child{border-right:0}
+.kpi-strip-label{font-size:11px;color:var(--text-2);text-transform:uppercase;letter-spacing:.04em}
+.kpi-strip-val{font-size:24px;font-weight:600;margin-top:6px;color:var(--text)}
+
+.stat-blocks{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+.stat-block{background:var(--panel-2);border-radius:6px;padding:10px}
+.stat-block-val{font-size:22px;font-weight:600;color:var(--text-1)}
+.stat-block-label{font-size:11px;color:var(--text-2);margin-top:2px}
+
+.pbar-row{margin-bottom:12px}
+.pbar-row:last-child{margin-bottom:0}
+.pbar-head{display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;color:var(--text)}
+.pbar-track{background:var(--panel-2);height:10px;border-radius:99px;overflow:hidden}
+.pbar-fill{height:100%;border-radius:99px}
+
+.b2b-bar-chart{display:flex;align-items:flex-end;gap:8px;height:130px;margin-bottom:6px;padding:0 4px}
+.b2b-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+.b2b-bar-val{font-size:10px;color:var(--text-2)}
+.b2b-bar{width:100%;background:var(--cyan);opacity:.4;border-radius:3px 3px 0 0}
+.b2b-bar.peak{opacity:1}
+.b2b-bar-labels{display:flex;gap:8px;padding:0 4px}
+.b2b-bar-label{flex:1;text-align:center;font-size:10px;color:var(--text-2)}
+
+.b2b-table{width:100%;border-collapse:collapse;font-size:13px}
+.b2b-table th{text-align:left;padding:8px 6px;color:var(--text-2);font-weight:400;font-size:11px;text-transform:uppercase;letter-spacing:.04em;border-bottom:1px solid var(--line)}
+.b2b-table th.num{text-align:right}
+.b2b-table td{padding:8px 6px;border-bottom:1px solid var(--line-soft);color:var(--text-1)}
+.b2b-table td:first-child{color:var(--text)}
+.b2b-table td.num{text-align:right;font-variant-numeric:tabular-nums}
+.b2b-table tr:last-child td{border-bottom:0}
+.b2b-table .pos{color:var(--green)}
+.b2b-table .neu{color:var(--text-2)}
 </style>
 </head>
 <body>
@@ -355,81 +397,73 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
           <span id="inbound-filter-summary" style="font-size:12px;color:var(--text-2);margin-left:auto"></span>
         </div>
 
-        <div class="grid" style="grid-template-columns:repeat(5,1fr);gap:14px">
-          <div class="card">
-            <div class="card-head"><span class="card-title">Total Inbound</span><span class="card-meta">all time</span></div>
-            <div class="kpi-val num" id="inbound-kpi-total">-</div>
-            <div class="kpi-sub">Total raw leads generated</div>
+        <div class="kpi-strip" id="inbound-kpi-strip">
+          <div class="kpi-strip-cell" style="border-top:2px solid var(--line)">
+            <div class="kpi-strip-label">Total inbound</div>
+            <div class="kpi-strip-val" id="inbound-kpi-total">-</div>
           </div>
-          <div class="card">
-            <div class="card-head"><span class="card-title">Hot Leads</span><span class="card-meta">pipeline</span></div>
-            <div class="kpi-val num" id="inbound-kpi-hot" style="color: var(--amber)">-</div>
-            <div class="kpi-sub">Needs immediate closure</div>
+          <div class="kpi-strip-cell" style="border-top:2px solid var(--amber)">
+            <div class="kpi-strip-label">Hot leads</div>
+            <div class="kpi-strip-val" id="inbound-kpi-hot">-</div>
           </div>
-          <div class="card">
-            <div class="card-head"><span class="card-title">Cold Leads</span><span class="card-meta">pipeline</span></div>
-            <div class="kpi-val num" id="inbound-kpi-cold" style="color: var(--text-2)">-</div>
-            <div class="kpi-sub">Disengaged or unresponsive</div>
+          <div class="kpi-strip-cell" style="border-top:2px solid var(--line)">
+            <div class="kpi-strip-label">Cold leads</div>
+            <div class="kpi-strip-val" id="inbound-kpi-cold">-</div>
           </div>
-          <div class="card">
-            <div class="card-head"><span class="card-title">Converted</span><span class="card-meta">won</span></div>
-            <div class="kpi-val num" id="inbound-kpi-converted" style="color: var(--green)">-</div>
-            <div class="kpi-sub" id="inbound-kpi-days">Fully onboarded partners</div>
+          <div class="kpi-strip-cell" style="border-top:2px solid var(--green)">
+            <div class="kpi-strip-label">Converted</div>
+            <div class="kpi-strip-val" id="inbound-kpi-converted">-</div>
           </div>
-          <div class="card">
-            <div class="card-head"><span class="card-title">Conversion Rate</span><span class="card-meta">efficiency</span></div>
-            <div class="kpi-val num" id="inbound-kpi-rate">-</div>
-            <div class="kpi-sub">Lead to conversion velocity</div>
+          <div class="kpi-strip-cell" style="border-top:2px solid var(--cyan)">
+            <div class="kpi-strip-label">Conv. rate</div>
+            <div class="kpi-strip-val" id="inbound-kpi-rate">-</div>
           </div>
         </div>
 
-        <div class="section-gap"></div>
-
-        <div class="grid" style="grid-template-columns:1fr">
-          <div class="card">
-            <div class="card-head"><span class="card-title">Pipeline funnel</span><span class="card-meta">by lead phase</span></div>
-            <div id="inbound-funnel" style="display:flex;height:32px;border-radius:8px;overflow:hidden;margin-top:8px"></div>
-            <div id="inbound-funnel-legend" style="display:flex;gap:16px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--text-1)"></div>
+        <div class="b2b-grid b2b-row2" style="margin-bottom:16px">
+          <div class="b2b-card">
+            <div class="b2b-card-title">Pipeline funnel</div>
+            <div class="stat-blocks" id="inbound-funnel-blocks"></div>
+            <div id="inbound-funnel-bars"></div>
+          </div>
+          <div class="b2b-card">
+            <div class="b2b-card-title">Monthly lead volume</div>
+            <div class="b2b-bar-chart" id="inbound-monthly-chart"></div>
+            <div class="b2b-bar-labels" id="inbound-monthly-labels"></div>
           </div>
         </div>
 
-        <div class="section-gap"></div>
-
-        <div class="grid row2b">
-          <div class="card">
-            <div class="card-head"><span class="card-title">Source split</span><span class="card-meta">acquisition channel</span></div>
-            <div id="inbound-sources" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+        <div class="b2b-grid b2b-row2" style="margin-bottom:16px">
+          <div class="b2b-card">
+            <div class="b2b-card-title">Source split</div>
+            <div id="inbound-sources"></div>
           </div>
-          <div class="card">
-            <div class="card-head"><span class="card-title">Sample tracking</span><span class="card-meta">conversion lever</span></div>
-            <div id="inbound-samples" style="display:flex;flex-direction:column;gap:8px;margin-top:8px"></div>
+          <div class="b2b-card">
+            <div class="b2b-card-title">Follow-up urgency</div>
+            <div id="inbound-urgency"></div>
           </div>
         </div>
 
-        <div class="grid row2b">
-          <div class="card">
-            <div class="card-head"><span class="card-title">Sales rep leaderboard</span><span class="card-meta">volume vs conversion</span></div>
-            <div class="list-ui" id="inbound-leadby" style="display:flex;flex-direction:column;gap:4px;margin-top:8px"></div>
-          </div>
-          <div class="card">
-            <div class="card-head"><span class="card-title">Top Locations</span><span class="card-meta">state distribution</span></div>
-            <div class="list-ui" id="inbound-locations">
-              </div>
-          </div>
+        <div class="b2b-card" style="margin-bottom:16px">
+          <div class="b2b-card-title">Performance by rep</div>
+          <table class="b2b-table">
+            <thead><tr><th>Rep</th><th class="num">Leads</th><th class="num">Won</th><th class="num">Conv. rate</th></tr></thead>
+            <tbody id="inbound-leadby"></tbody>
+          </table>
         </div>
 
-        <div class="section-gap"></div>
-
-        <div class="grid" style="grid-template-columns: 1fr;">
-          <div class="card">
-             <div class="card-head"><span class="card-title">Live Tracking & Remarks</span><span class="card-meta">recent activity</span></div>
-             <div id="inbound-remarks" style="display:flex;flex-direction:column;">
-                </div>
-          </div>
+        <div class="b2b-card" style="margin-bottom:16px">
+          <div class="b2b-card-title">Performance by location</div>
+          <table class="b2b-table">
+            <thead><tr><th>Region</th><th class="num">Total</th><th class="num">Won</th></tr></thead>
+            <tbody id="inbound-locations"></tbody>
+          </table>
         </div>
-      </div>
-    </section>
-  </div>
+
+        <div class="b2b-card">
+          <div class="b2b-card-title">Live tracking and remarks</div>
+          <div id="inbound-remarks" style="display:flex;flex-direction:column;"></div>
+        </div>
 
 <script>
 // ===== Background Particles =====
@@ -598,6 +632,24 @@ function aggregateInbound(rows) {
     .map(([place, m]) => ({ place, total: m.total, converted: m.converted }))
     .sort((a,b) => b.total - a.total).slice(0,10);
 
+  const monthVolume = {};
+  rows.forEach(r => {
+    const m = r[IB_RI.month];
+    if (m) monthVolume[m] = (monthVolume[m] || 0) + 1;
+  });
+
+  const today = new Date().toISOString().slice(0,10);
+  let overdue90 = 0, overdue30 = 0, overdueUnder30 = 0, upcoming = 0;
+  rows.forEach(r => {
+    const d = r[IB_RI.date];
+    if (!d) return;
+    const diffDays = (new Date(today) - new Date(d)) / 86400000;
+    if (diffDays >= 90) overdue90++;
+    else if (diffDays >= 30) overdue30++;
+    else if (diffDays >= 0) overdueUnder30++;
+    else upcoming++;
+  });
+
   return {
     kpis: {
       totalLeads, convertedLeads, hotLeads, coldLeads, samplesProvided,
@@ -607,7 +659,9 @@ function aggregateInbound(rows) {
     sourceBreakdown: Object.entries(sourceBreakdown).sort((a,b)=>b[1]-a[1]).map(([name,count])=>({name,count})),
     leadByPerformance: sortedLeadOwners,
     topLocations: sortedLocations,
-    recentActivityLog: recentRemarks
+    recentActivityLog: recentRemarks,
+    monthlyVolume: Object.keys(monthVolume).sort().map(m => ({ month: m, count: monthVolume[m] })),
+    urgency: { overdue90, overdue30, overdueUnder30, upcoming }
   };
 }
 
@@ -809,68 +863,108 @@ document.querySelectorAll('.fchip').forEach(b => {
 // ===== INBOUND Dashboard Rendering =====
 function renderInboundDashboard(data) {
   if (data.error) { console.error("Backend Error:", data.error); return; }
-
   const kpi = data.kpis;
+
   document.getElementById('inbound-kpi-total').innerText = (kpi.totalLeads || 0).toLocaleString();
   document.getElementById('inbound-kpi-hot').innerText = (kpi.hotLeads || 0).toLocaleString();
   document.getElementById('inbound-kpi-cold').innerText = (kpi.coldLeads || 0).toLocaleString();
   document.getElementById('inbound-kpi-converted').innerText = (kpi.convertedLeads || 0).toLocaleString();
   document.getElementById('inbound-kpi-rate').innerText = kpi.conversionRate || "0%";
-  document.getElementById('inbound-kpi-days').innerText = kpi.avgDaysToConvert
-    ? `${kpi.avgDaysToConvert}d avg to close (n=${kpi.avgDaysToConvertSample})`
-    : "Fully onboarded partners";
 
-  // ===== Pipeline funnel =====
-  const funnelColors = {
-    "overdue": "#5C6573", "no follow-up scheduled": "#7C8390",
-    "converted": "#34D399", "cold": "#9AA4B2", "upcoming": "#22D3EE",
-    "not set": "#293345"
-  };
   const statusList = data.statusBreakdown || [];
-  const funnelTotal = statusList.reduce((sum, s) => sum + s.count, 0) || 1;
-  const funnelEl = document.getElementById('inbound-funnel');
-  const funnelLegendEl = document.getElementById('inbound-funnel-legend');
-  if (funnelEl) {
-    funnelEl.style.height = "44px";
-    funnelEl.innerHTML = statusList.map(s => {
-      const key = s.name.toLowerCase();
-      const col = funnelColors[key] || "#444B57";
-      const pct = (s.count / funnelTotal * 100).toFixed(0);
-      const showLabel = pct > 5;
-      const label = showLabel ? `${s.name} · ${s.count} (${pct}%)` : '';
-      return `<div style="flex:${s.count};background:${col};display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;padding:0 8px">${label}</div>`;
+  const funnelTotal = statusList.reduce((s,x)=>s+x.count,0) || 1;
+  const funnelColors = {
+    "overdue": "#5C6573", "no follow-up scheduled": "#FBBF24",
+    "converted": "#34D399", "cold": "#9AA4B2", "upcoming": "#22D3EE", "not set": "#293345"
+  };
+
+  const blocksEl = document.getElementById('inbound-funnel-blocks');
+  if (blocksEl) {
+    blocksEl.innerHTML = statusList.slice(0,4).map(s => {
+      const col = funnelColors[s.name.toLowerCase()] || "var(--text-1)";
+      return `<div class="stat-block"><div class="stat-block-val" style="color:${col}">${s.count}</div><div class="stat-block-label">${s.name.toUpperCase()}</div></div>`;
     }).join('');
   }
-  if (funnelLegendEl) {
-    funnelLegendEl.innerHTML = statusList.map(s => {
-      const key = s.name.toLowerCase();
-      const col = funnelColors[key] || "#444B57";
-      const pct = (s.count / funnelTotal * 100).toFixed(1);
-      return `<span style="display:inline-flex;align-items:center;gap:8px;font-size:13px"><i style="width:10px;height:10px;border-radius:3px;background:${col};display:inline-block;flex-shrink:0"></i>${s.name} · <strong style="color:var(--text)">${s.count}</strong> <span style="color:var(--text-2)">(${pct}%)</span></span>`;
+
+  const barsEl = document.getElementById('inbound-funnel-bars');
+  if (barsEl) {
+    barsEl.innerHTML = statusList.map(s => {
+      const col = funnelColors[s.name.toLowerCase()] || "var(--text-1)";
+      const pct = (s.count / funnelTotal * 100);
+      return `<div class="pbar-row"><div class="pbar-head"><span>${s.name}</span><span>${pct.toFixed(1)}%</span></div><div class="pbar-track"><div class="pbar-fill" style="width:${Math.max(pct,1.5)}%;background:${col}"></div></div></div>`;
     }).join('');
   }
-  
-  // ===== Source split =====
-  const sourceIcons = { meta: "📱", shopify: "🛒", "customer care": "☎️" };
+
+  const months = data.monthlyVolume || [];
+  const maxVol = Math.max(...months.map(m=>m.count), 1);
+  const monthLabels = {"2025-11":"Nov","2025-12":"Dec","2026-01":"Jan","2026-02":"Feb","2026-03":"Mar","2026-04":"Apr","2026-05":"May","2026-06":"Jun"};
+  const chartEl = document.getElementById('inbound-monthly-chart');
+  const labelsEl = document.getElementById('inbound-monthly-labels');
+  if (chartEl) {
+    chartEl.innerHTML = months.map(m => {
+      const h = Math.max((m.count / maxVol) * 130, 4);
+      const isPeak = m.count === maxVol;
+      return `<div class="b2b-bar-col"><span class="b2b-bar-val">${m.count}</span><div class="b2b-bar ${isPeak?'peak':''}" style="height:${h}px"></div></div>`;
+    }).join('');
+  }
+  if (labelsEl) {
+    labelsEl.innerHTML = months.map(m => `<span class="b2b-bar-label">${monthLabels[m.month]||m.month}</span>`).join('');
+  }
+
   const sourcesEl = document.getElementById('inbound-sources');
   if (sourcesEl && data.sourceBreakdown) {
     const totalSrc = data.sourceBreakdown.reduce((a,s)=>a+s.count,0) || 1;
-    const maxSource = Math.max(...data.sourceBreakdown.map(s => s.count));
     sourcesEl.innerHTML = data.sourceBreakdown.map(s => {
-      const width = (s.count / maxSource * 100).toFixed(0);
-      const pct = (s.count / totalSrc * 100).toFixed(1);
-      return `<div style="padding:6px 0">
-        <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:15px;margin-bottom:6px">
-          <span style="color:var(--text);font-weight:500">${s.name}</span>
-          <span style="color:var(--text)"><strong>${s.count}</strong> <span style="color:var(--text-2);font-size:13px">(${pct}%)</span></span>
-        </div>
-        <div style="height:8px;background:var(--panel-2);border-radius:99px;overflow:hidden">
-          <div style="width:${width}%;height:100%;background:linear-gradient(90deg,var(--cyan),var(--violet));border-radius:99px"></div>
-        </div>
-      </div>`;
+      const pct = (s.count / totalSrc * 100);
+      return `<div class="pbar-row"><div class="pbar-head"><span>${s.name}</span><span>${s.count} <span style="color:var(--text-2)">${pct.toFixed(1)}%</span></span></div><div class="pbar-track"><div class="pbar-fill" style="width:${Math.max(pct,1.5)}%;background:var(--cyan)"></div></div></div>`;
     }).join('');
   }
 
+  const u = data.urgency || {};
+  const urgencyTotal = (u.overdue90||0)+(u.overdue30||0)+(u.overdueUnder30||0)+(u.upcoming||0) || 1;
+  const urgencyEl = document.getElementById('inbound-urgency');
+  if (urgencyEl) {
+    const rows = [
+      {label:"90+ days overdue", val:u.overdue90||0, col:"#F87171"},
+      {label:"30-90 days overdue", val:u.overdue30||0, col:"#FBBF24"},
+      {label:"Under 30 days overdue", val:u.overdueUnder30||0, col:"#FBBF24"},
+      {label:"Upcoming", val:u.upcoming||0, col:"#34D399"}
+    ];
+    urgencyEl.innerHTML = rows.map(r => {
+      const pct = (r.val / urgencyTotal * 100);
+      return `<div class="pbar-row"><div class="pbar-head"><span>${r.label}</span><span>${r.val}</span></div><div class="pbar-track"><div class="pbar-fill" style="width:${Math.max(pct,1.5)}%;background:${r.col}"></div></div></div>`;
+    }).join('');
+  }
+
+  if (data.leadByPerformance) {
+    document.getElementById('inbound-leadby').innerHTML = data.leadByPerformance.map(rep => {
+      const wonClass = rep.converted > 0 ? 'pos' : 'neu';
+      const rateClass = parseFloat(rep.convRate) > 0 ? 'pos' : 'neu';
+      const hot = rep.hot > 0 ? ` · ${rep.hot} hot` : '';
+      return `<tr><td>${rep.name}${hot}</td><td class="num">${rep.total}</td><td class="num ${wonClass}">${rep.converted}</td><td class="num ${rateClass}">${rep.convRate}%</td></tr>`;
+    }).join('');
+  }
+
+  if (data.topLocations) {
+    document.getElementById('inbound-locations').innerHTML = data.topLocations.map(loc => {
+      const wonClass = loc.converted > 0 ? 'pos' : 'neu';
+      return `<tr><td>${loc.place}</td><td class="num">${loc.total}</td><td class="num ${wonClass}">${loc.converted}</td></tr>`;
+    }).join('');
+  }
+
+  if (data.recentActivityLog) {
+    document.getElementById('inbound-remarks').innerHTML = data.recentActivityLog.map(log => {
+      let statusClass = '';
+      const statusLower = log.status.toLowerCase();
+      if (statusLower.includes('hot')) statusClass = 'hot';
+      if (statusLower.includes('converted')) statusClass = 'converted';
+      return `<div class="feed-item">
+        <div class="feed-meta"><span><strong>${log.leadBy}</strong> · ${log.location}</span><span class="feed-badge ${statusClass}">${log.status || 'Pending'}</span></div>
+        <div class="feed-text">"${log.remark || 'No remarks provided.'}"</div>
+      </div>`;
+    }).join('');
+  }
+}
   // ===== Sample tracking =====
   const samplesEl = document.getElementById('inbound-samples');
   if (samplesEl) {
