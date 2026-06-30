@@ -90,6 +90,9 @@ h1.title{font-size:clamp(40px,5vw,72px); font-weight:700; letter-spacing:-.04em;
 .card-meta{font-size:11px;color:var(--text-2)}
 .kpi-val{font-size:30px;font-weight:600;letter-spacing:-.025em;line-height:1.1}
 .kpi-sub{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12px;color:var(--text-1)}
+ .kpi-val{font-size:30px;font-weight:600;letter-spacing:-.025em;line-height:1.1}
+#inbound-kpi-total,#inbound-kpi-hot,#inbound-kpi-cold,#inbound-kpi-converted,#inbound-kpi-rate{font-size:34px}
+.kpi-sub{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:12px;color:var(--text-1)} 
 
 /* ===== MT SPECIFIC STYLES ===== */
 .spark{width:100%;height:36px;margin-top:14px;display:block}
@@ -148,11 +151,11 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 .feed-item{display:flex; flex-direction:column; gap:6px; padding:14px; border-bottom:1px solid var(--line-soft); transition:background .15s}
 .feed-item:hover{background:var(--panel-2)}
 .feed-item:last-child{border-bottom:none}
-.feed-meta{font-size:11px; color:var(--text-2); display:flex; justify-content:space-between;}
+.feed-meta{font-size:13px; color:var(--text-2); display:flex; justify-content:space-between;}
 .feed-badge{display:inline-block; padding:3px 8px; background:rgba(255,255,255,0.05); border-radius:4px; font-weight:600; letter-spacing:0.02em; text-transform:capitalize;}
 .feed-badge.hot{color:var(--red); background:rgba(248,113,113,0.1)}
 .feed-badge.converted{color:var(--green); background:rgba(52,211,153,0.1)}
-.feed-text{font-size:14px; color:var(--text); line-height:1.4}
+.feed-text{font-size:15px; color:var(--text); line-height:1.5}
 .list-ui{display:flex;flex-direction:column}
 .list-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:16px;padding:14px 8px;border-bottom:1px solid var(--line-soft)}
 .list-row:last-child{border-bottom:0}
@@ -331,7 +334,7 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
 
     <section class="data" style="padding-top:0;">
       <div class="shell">
-        <div class="grid" style="grid-template-columns:repeat(5,1fr)">
+        <div class="grid" style="grid-template-columns:repeat(5,1fr);gap:14px">
           <div class="card">
             <div class="card-head"><span class="card-title">Total Inbound</span><span class="card-meta">all time</span></div>
             <div class="kpi-val num" id="inbound-kpi-total">-</div>
@@ -662,12 +665,22 @@ function renderInboundDashboard(data) {
   const funnelEl = document.getElementById('inbound-funnel');
   const funnelLegendEl = document.getElementById('inbound-funnel-legend');
   if (funnelEl) {
+    funnelEl.style.height = "44px";
     funnelEl.innerHTML = statusList.map(s => {
       const key = s.name.toLowerCase();
       const col = funnelColors[key] || "#444B57";
       const pct = (s.count / funnelTotal * 100).toFixed(0);
-      const label = pct > 6 ? `${s.name} ${s.count}` : '';
-      return `<div style="flex:${s.count};background:${col};display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden">${label}</div>`;
+      const showLabel = pct > 5;
+      const label = showLabel ? `${s.name} · ${s.count} (${pct}%)` : '';
+      return `<div style="flex:${s.count};background:${col};display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;font-weight:600;white-space:nowrap;overflow:hidden;padding:0 8px">${label}</div>`;
+    }).join('');
+  }
+  if (funnelLegendEl) {
+    funnelLegendEl.innerHTML = statusList.map(s => {
+      const key = s.name.toLowerCase();
+      const col = funnelColors[key] || "#444B57";
+      const pct = (s.count / funnelTotal * 100).toFixed(1);
+      return `<span style="display:inline-flex;align-items:center;gap:8px;font-size:13px"><i style="width:10px;height:10px;border-radius:3px;background:${col};display:inline-block;flex-shrink:0"></i>${s.name} · <strong style="color:var(--text)">${s.count}</strong> <span style="color:var(--text-2)">(${pct}%)</span></span>`;
     }).join('');
   }
   if (funnelLegendEl) {
@@ -682,15 +695,17 @@ function renderInboundDashboard(data) {
   const sourceIcons = { meta: "📱", shopify: "🛒", "customer care": "☎️" };
   const sourcesEl = document.getElementById('inbound-sources');
   if (sourcesEl && data.sourceBreakdown) {
+    const totalSrc = data.sourceBreakdown.reduce((a,s)=>a+s.count,0) || 1;
     const maxSource = Math.max(...data.sourceBreakdown.map(s => s.count));
     sourcesEl.innerHTML = data.sourceBreakdown.map(s => {
       const width = (s.count / maxSource * 100).toFixed(0);
-      return `<div>
-        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
-          <span style="color:var(--text)">${s.name}</span>
-          <span style="color:var(--text-1)">${s.count}</span>
+      const pct = (s.count / totalSrc * 100).toFixed(1);
+      return `<div style="padding:6px 0">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;font-size:15px;margin-bottom:6px">
+          <span style="color:var(--text);font-weight:500">${s.name}</span>
+          <span style="color:var(--text)"><strong>${s.count}</strong> <span style="color:var(--text-2);font-size:13px">(${pct}%)</span></span>
         </div>
-        <div style="height:6px;background:var(--panel-2);border-radius:99px;overflow:hidden">
+        <div style="height:8px;background:var(--panel-2);border-radius:99px;overflow:hidden">
           <div style="width:${width}%;height:100%;background:linear-gradient(90deg,var(--cyan),var(--violet));border-radius:99px"></div>
         </div>
       </div>`;
@@ -704,33 +719,32 @@ function renderInboundDashboard(data) {
     const total = kpi.totalLeads || 1;
     const pct = ((provided / total) * 100).toFixed(2);
     samplesEl.innerHTML = `
-      <div style="display:flex;justify-content:space-between;font-size:13px;padding:10px 0;border-bottom:1px solid var(--line-soft)">
-        <span style="color:var(--text-1)">Samples sent</span>
-        <span style="color:var(--text);font-weight:500">${provided}</span>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding:14px 0;border-bottom:1px solid var(--line-soft)">
+        <span style="color:var(--text-1);font-size:15px">Samples sent</span>
+        <span style="color:var(--text);font-weight:600;font-size:22px">${provided}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:13px;padding:10px 0">
-        <span style="color:var(--text-1)">% of total leads</span>
-        <span style="color:var(--text);font-weight:500">${pct}%</span>
+      <div style="display:flex;justify-content:space-between;align-items:baseline;padding:14px 0">
+        <span style="color:var(--text-1);font-size:15px">% of total leads</span>
+        <span style="color:var(--text);font-weight:600;font-size:22px">${pct}%</span>
       </div>
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);font-size:11px;color:var(--text-2)">
+      <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line-soft);font-size:12px;color:var(--text-2)">
         Sample data is sparse — most rows have this field unfilled. Treat as directional only.
       </div>`;
-  }
 
   // ===== Leaderboard with conversion rate =====
   if (data.leadByPerformance) {
     document.getElementById('inbound-leadby').innerHTML = data.leadByPerformance.map(rep => {
-      const hotBadge = rep.hot > 0 ? `<span style="color:var(--amber);margin-left:8px">${rep.hot} hot</span>` : '';
+      const hotBadge = rep.hot > 0 ? `<span style="color:var(--amber);margin-left:8px">· ${rep.hot} hot</span>` : '';
       return `
-      <div class="list-row">
+      <div class="list-row" style="padding:16px 8px">
         <div>
-          <div class="list-title">${rep.name}</div>
-          <div class="list-sub">${rep.convRate}% conversion${hotBadge}</div>
+          <div class="list-title" style="font-size:16px">${rep.name}</div>
+          <div class="list-sub" style="font-size:13px;margin-top:3px">${rep.convRate}% conversion${hotBadge}</div>
         </div>
-        <div style="font-size:12px; color:var(--text-1); text-align:right;">
-           <span style="color:var(--green)">${rep.converted} won</span>
+        <div style="font-size:14px; color:var(--text-1); text-align:right;">
+           <span style="color:var(--green);font-weight:500">${rep.converted} won</span>
         </div>
-        <div class="list-val">${rep.total} leads</div>
+        <div class="list-val" style="font-size:16px">${rep.total} leads</div>
       </div>`;
     }).join('');
   }
@@ -738,15 +752,15 @@ function renderInboundDashboard(data) {
   // ===== Top locations (unchanged) =====
   if (data.topLocations) {
     document.getElementById('inbound-locations').innerHTML = data.topLocations.map(loc => `
-      <div class="list-row">
+      <div class="list-row" style="padding:16px 8px">
         <div>
-          <div class="list-title">${loc.place}</div>
-          <div class="list-sub">Region</div>
+          <div class="list-title" style="font-size:16px">${loc.place}</div>
+          <div class="list-sub" style="font-size:13px;margin-top:3px">Region</div>
         </div>
-        <div style="font-size:12px; color:var(--text-1); text-align:right;">
+        <div style="font-size:14px; color:var(--text-1); text-align:right;">
            ${loc.converted} won
         </div>
-        <div class="list-val">${loc.total} total</div>
+        <div class="list-val" style="font-size:16px">${loc.total} total</div>
       </div>
     `).join('');
   }
