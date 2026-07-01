@@ -908,25 +908,30 @@ function renderInboundDashboard(data) {
   const statusList = data.statusBreakdown || [];
   const funnelTotal = statusList.reduce((s,x)=>s+x.count,0) || 1;
   const funnelColors = {
-    "overdue": "#5C6573", "no follow-up scheduled": "#FBBF24",
-    "converted": "#34D399", "cold": "#9AA4B2", "upcoming": "#22D3EE", "not set": "#293345"
+    "overdue": "#F87171", "no follow-up scheduled": "#FBBF24",
+    "converted": "#34D399", "cold": "#9AA4B2", "upcoming": "#22D3EE", "not set": "#5C6573",
+    "#ref!": null
   };
 
   const blocksEl = document.getElementById('inbound-funnel-blocks');
   if (blocksEl) {
-    blocksEl.innerHTML = statusList.slice(0,4).map(s => {
-      const col = funnelColors[s.name.toLowerCase()] || "var(--text-1)";
+    blocksEl.innerHTML = statusList
+      .filter(s => s.name !== '#REF!' && funnelColors[s.name.toLowerCase()] !== null)
+      .slice(0,4).map(s => {
+        const col = funnelColors[s.name.toLowerCase()] || "var(--text-1)";
       return `<div class="stat-block"><div class="stat-block-val" style="color:${col}">${s.count}</div><div class="stat-block-label">${s.name.toUpperCase()}</div></div>`;
-    }).join('');
+      }).join('');
   }
 
   const barsEl = document.getElementById('inbound-funnel-bars');
   if (barsEl) {
-    barsEl.innerHTML = statusList.map(s => {
-      const col = funnelColors[s.name.toLowerCase()] || "var(--text-1)";
-      const pct = (s.count / funnelTotal * 100);
-      return `<div class="pbar-row"><div class="pbar-head"><span>${s.name}</span><span>${pct.toFixed(1)}%</span></div><div class="pbar-track"><div class="pbar-fill" style="width:${Math.max(pct,1.5)}%;background:${col}"></div></div></div>`;
-    }).join('');
+    barsEl.innerHTML = statusList
+      .filter(s => funnelColors[s.name.toLowerCase()] !== null && s.name !== '#REF!')
+      .map(s => {
+        const col = funnelColors[s.name.toLowerCase()] || "#5C6573";
+        const pct = (s.count / funnelTotal * 100);
+        return `<div class="pbar-row"><div class="pbar-head"><span>${s.name}</span><span>${pct.toFixed(1)}%</span></div><div class="pbar-track"><div class="pbar-fill" style="width:${Math.max(pct,1.5)}%;background:${col}"></div></div></div>`;
+      }).join('');
   }
 
   const months = data.monthlyVolume || [];
