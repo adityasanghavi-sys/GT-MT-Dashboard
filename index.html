@@ -468,8 +468,11 @@ td.num{text-align:right;font-variant-numeric:tabular-nums}
         </div>
 
         <div class="b2b-card">
-          <div class="b2b-card-title">Live tracking and remarks</div>
-          <div id="inbound-remarks" style="display:flex;flex-direction:column;"></div>
+          <div class="b2b-card-title">Remarks breakdown <span id="inbound-remarks-total" style="font-size:12px;font-weight:400;color:var(--text-2)"></span></div>
+          <div id="inbound-remarks-bar" style="display:flex;height:24px;border-radius:6px;overflow:hidden;margin-bottom:12px"></div>
+          <div id="inbound-remarks-bars" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px" id="inbound-remarks-pills"></div>
+          <div id="inbound-remarks-feed" style="border:1px solid var(--line);border-radius:6px;overflow:hidden"></div>
         </div>
       </div>
     </section>
@@ -660,6 +663,43 @@ function aggregateInbound(rows) {
     else upcoming++;
   });
 
+  // Classify remarks into categories
+  const RCAT_PATTERNS = {
+    "Catalogue shared":  ["catalogue shared","catalog shared","catlog shared","shared the catlog","shared catalog","catalogue send","shared catlog","catalogue sent","catalog sent","catlogue sent"],
+    "Did not pick up":   ["did not pick","didn't pick","dnp","not pick","no pick","didnt pick","did not piclup","didn't picked"],
+    "Not interested":    ["not interested","not int","no interest","noint","not intrested","not intersted","does not deal","not deals","no requirement","not required","not deal","does not work in fmcg","works in mt"],
+    "Busy / call later": ["busy","call later","call back","will call","call tomm","call tomorr","call after"],
+    "Number issue":      ["wrong number","no number","switched off","not reachable","invalid","not available","number does not exist","wrong no"]
+  };
+
+  function classifyRemark(text) {
+    if (!text) return "Other";
+    const t = text.toLowerCase();
+    for (const [cat, keywords] of Object.entries(RCAT_PATTERNS)) {
+      if (keywords.some(k => t.includes(k))) return cat;
+    }
+    return "Other";
+  }
+
+  const remarksCatCount = {};
+  const remarksRaw = [];
+
+  rows.forEach(r => {
+    const remark = r[IB_RI.remark];
+    const leadBy = r[IB_RI.leadBy];
+    const location = r[IB_RI.location];
+    const status = r[IB_RI.phase] || r[IB_RI.status] || "Pending";
+    if (!remark) return;
+    const cat = classifyRemark(remark);
+    remarksCatCount[cat] = (remarksCatCount[cat] || 0) + 1;
+    if (remarksRaw.length < 200) {
+      remarksRaw.push({ remark, leadBy, location, status, cat });
+    }
+  });
+
+  const RCAT_ORDER = ["Catalogue shared","Did not pick up","Not interested","Busy / call later","Number issue","Other"];
+  const remarksBreakdown = RCAT_ORDER.map(name => ({ name, count: remarksCatCount[name] || 0 })).filter(c => c.count > 0);
+
   return {
     kpis: {
       totalLeads, convertedLeads, hotLeads, coldLeads, samplesProvided,
@@ -669,7 +709,8 @@ function aggregateInbound(rows) {
     sourceBreakdown: Object.entries(sourceBreakdown).sort((a,b)=>b[1]-a[1]).map(([name,count])=>({name,count})),
     leadByPerformance: sortedLeadOwners,
     topLocations: sortedLocations,
-    recentActivityLog: recentRemarks,
+    remarksBreakdown,
+    remarksRaw,
     monthlyVolume: Object.keys(monthVolume).sort().map(m => ({ month: m, count: monthVolume[m] })),
     urgency: { overdue90, overdue30, overdueUnder30, upcoming }
   };
@@ -963,17 +1004,98 @@ function renderInboundDashboard(data) {
     }).join('');
   }
 
-  if (data.recentActivityLog) {
-    document.getElementById('inbound-remarks').innerHTML = data.recentActivityLog.map(log => {
-      let statusClass = '';
-      const statusLower = log.status.toLowerCase();
-      if (statusLower.includes('hot')) statusClass = 'hot';
-      if (statusLower.includes('converted')) statusClass = 'converted';
-      return `<div class="feed-item">
-        <div class="feed-meta"><span><strong>${log.leadBy}</strong> · ${log.location}</span><span class="feed-badge ${statusClass}">${log.status || 'Pending'}</span></div>
-        <div class="feed-text">"${log.remark || 'No remarks provided.'}"</div>
-      </div>`;
-    }).join('');
+  if (data.remarksBreakdown) {
+    const RCAT_COLORS = {
+      "Catalogue shared":   "#22D3EE",
+      "Did not pick up":    "#5C6573",
+      "Not interested":     "#F87171",
+      "Busy / call later":  "#FBBF24",
+      "Number issue":       "#A78BFA",
+      "Other":              "#293345"
+    };
+
+    const breakdown = data.remarksBreakdown;
+    const totalRemarks = breakdown.reduce((s, c) => s + c.count, 0);
+
+    const totalEl = document.getElementById('inbound-remarks-total');
+    if (totalEl) totalEl.textContent = `· ${totalRemarks.toLocaleString()} classified`;
+
+    // Stacked bar
+    const barEl = document.getElementById('inbound-remarks-bar');
+    if (barEl) {
+      barEl.innerHTML = breakdown.map(c => {
+        const pct = (c.count / totalRemarks * 100).toFixed(1);
+        const col = RCAT_COLORS[c.name] || '#293345';
+        const label = parseFloat(pct) > 8 ? `${c.name.split(' ')[0]} ${pct}%` : '';
+        return `<div style="flex:${c.count};background:${col};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:${col === '#FBBF24' || col === '#22D3EE' ? '#000' : '#fff'};overflow:hidden;padding:0 4px;white-space:nowrap">${label}</div>`;
+      }).join('');
+    }
+
+    // Progress bars
+    const barsEl = document.getElementById('inbound-remarks-bars');
+    if (barsEl) {
+      const maxCount = Math.max(...breakdown.map(c => c.count));
+      barsEl.innerHTML = breakdown.map(c => {
+        const pct = (c.count / totalRemarks * 100).toFixed(1);
+        const barW = (c.count / maxCount * 100).toFixed(0);
+        const col = RCAT_COLORS[c.name] || '#293345';
+        return `<div class="pbar-row" style="margin-bottom:0">
+          <div class="pbar-head">
+            <span style="display:flex;align-items:center;gap:8px">
+              <i style="width:8px;height:8px;background:${col};border-radius:2px;display:inline-block;flex-shrink:0"></i>${c.name}
+            </span>
+            <span><strong>${c.count}</strong> <span style="color:var(--text-2)">${pct}%</span></span>
+          </div>
+          <div class="pbar-track"><div class="pbar-fill" style="width:${barW}%;background:${col}"></div></div>
+        </div>`;
+      }).join('');
+    }
+
+    // Pills + filtered feed
+    let activeCategory = 'ALL';
+    const allRemarks = data.remarksRaw || [];
+
+    function renderRemarksFeed(category) {
+      const feedEl = document.getElementById('inbound-remarks-feed');
+      if (!feedEl) return;
+      const filtered = category === 'ALL'
+        ? allRemarks.slice(0, 20)
+        : allRemarks.filter(r => r.cat === category).slice(0, 20);
+
+      if (filtered.length === 0) {
+        feedEl.innerHTML = `<div style="padding:16px;color:var(--text-2);font-size:13px">No remarks in this category.</div>`;
+        return;
+      }
+
+      const header = `<div style="padding:8px 12px;background:var(--panel-2);font-size:11px;color:var(--text-2);border-bottom:1px solid var(--line)">${category === 'ALL' ? 'All remarks' : category} · showing ${filtered.length}</div>`;
+      feedEl.innerHTML = header + filtered.map(r => {
+        const statusLower = (r.status || '').toLowerCase();
+        const statusClass = statusLower.includes('hot') ? 'hot' : statusLower.includes('converted') ? 'converted' : '';
+        return `<div class="feed-item">
+          <div class="feed-meta"><span><strong>${r.leadBy}</strong> · ${r.location}</span><span class="feed-badge ${statusClass}">${r.status || 'Pending'}</span></div>
+          <div class="feed-text">"${r.remark}"</div>
+        </div>`;
+      }).join('');
+    }
+
+    const pillsEl = document.getElementById('inbound-remarks-pills');
+    if (pillsEl) {
+      const allPills = [{ name: 'All', key: 'ALL', col: 'var(--text-2)', count: totalRemarks }, ...breakdown.map(c => ({ name: c.name, key: c.name, col: RCAT_COLORS[c.name] || '#293345', count: c.count }))];
+      pillsEl.innerHTML = allPills.map(p =>
+        `<span data-cat="${p.key}" style="padding:5px 12px;border-radius:99px;background:${p.col}22;border:1px solid ${p.col}55;font-size:12px;color:${p.col};cursor:pointer">${p.name} ${p.count}</span>`
+      ).join('');
+
+      pillsEl.querySelectorAll('span').forEach(pill => {
+        pill.addEventListener('click', () => {
+          activeCategory = pill.dataset.cat;
+          pillsEl.querySelectorAll('span').forEach(p => p.style.fontWeight = '400');
+          pill.style.fontWeight = '600';
+          renderRemarksFeed(activeCategory);
+        });
+      });
+    }
+
+    renderRemarksFeed('ALL');
   }
 
   const samplesEl = document.getElementById('inbound-samples');
