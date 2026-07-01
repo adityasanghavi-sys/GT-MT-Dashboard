@@ -66,7 +66,7 @@ h1.title{font-size:clamp(40px,5vw,72px); font-weight:700; letter-spacing:-.04em;
 .delta.dn{background:rgba(248,113,113,.12);color:#FCA5A5}
 
 /* ===== DATA LAYER ===== */
-.data{background:transparent;padding:80px 32px 120px;border-top:none;position:relative;z-index:3}
+.data{background:transparent;padding:100px 32px 120px;border-top:none;position:relative;z-index:3}
 .shell{max-width:1440px;margin:0 auto}
 .section-head{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:32px;gap:24px;flex-wrap:wrap}
 .section-head h2{font-size:22px;font-weight:600;letter-spacing:-.02em}
@@ -808,8 +808,10 @@ function renderMtDashboard(data, zoneFilter) {
     ? "₹" + (filteredSales/100000).toFixed(2) + "L" 
     : "₹" + Math.round(filteredSales).toLocaleString('en-IN');
 
-  document.getElementById('hkpi-sales').innerText = kpi.netSalesFormatted;
-  document.getElementById('hkpi-stores').innerText = kpi.activeStores;
+  const hkpiSales = document.getElementById('hkpi-sales');
+  const hkpiStores = document.getElementById('hkpi-stores');
+  if (hkpiSales) hkpiSales.innerText = kpi.netSalesFormatted;
+  if (hkpiStores) hkpiStores.innerText = kpi.activeStores;
   document.getElementById('mt-kpi-sales').innerText = fmtSales;
   document.getElementById('mt-kpi-stores').innerText = filteredStores;
   document.getElementById('mt-kpi-velocity').innerText = filteredStores > 0 ? "₹" + Math.round(filteredSales / filteredStores).toLocaleString('en-IN') : "—";
